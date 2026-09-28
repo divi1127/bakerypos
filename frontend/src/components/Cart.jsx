@@ -424,6 +424,15 @@ export default function Cart({ onClose, onCheckout, mobile = false }) {
             <dt className="text-chocolate-500 dark:text-chocolate-300">{BRAND.taxLabel}</dt>
             <dd className="font-semibold text-chocolate-800 dark:text-cream-100">{CURRENCY(totals.tax)}</dd>
           </div>
+          {totals.roundOff !== 0 && (
+            <div className="flex items-center justify-between">
+              <dt className="text-chocolate-500 dark:text-chocolate-300">Round Off</dt>
+              <dd className="font-semibold text-chocolate-800 dark:text-cream-100">
+                {totals.roundOff > 0 ? '+' : '-'}
+                {CURRENCY(Math.abs(totals.roundOff))}
+              </dd>
+            </div>
+          )}
         </dl>
 
         <div className="mt-3 flex items-end justify-between border-t border-dashed border-cream-300 pt-3 dark:border-chocolate-600">

@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { canPortal } from '../utils/portal'
 
 const SIZES = {
   sm: 'max-w-md',
@@ -10,6 +12,7 @@ const SIZES = {
 }
 
 export default function Modal({ open, onClose, title, subtitle, icon: Icon, size = 'md', children, footer }) {
+
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => {
@@ -24,10 +27,12 @@ export default function Modal({ open, onClose, title, subtitle, icon: Icon, size
     }
   }, [open, onClose])
 
-  return (
+  if (!canPortal()) return null
+
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="no-print fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-6">
+        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -44,7 +49,7 @@ export default function Modal({ open, onClose, title, subtitle, icon: Icon, size
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-            className={`relative flex max-h-[92vh] w-full ${SIZES[size]} flex-col overflow-hidden rounded-t-3xl border border-cream-300 bg-white shadow-lift sm:rounded-3xl dark:border-chocolate-600 dark:bg-chocolate-800`}
+            className={`relative flex max-h-[92dvh] w-full ${SIZES[size]} flex-col overflow-hidden rounded-t-3xl border border-cream-300 bg-white shadow-lift sm:rounded-3xl dark:border-chocolate-600 dark:bg-chocolate-800`}
           >
             <div className="flex items-start gap-3 border-b border-cream-200 px-5 py-4 sm:px-6 dark:border-chocolate-700">
               {Icon && (
@@ -61,16 +66,19 @@ export default function Modal({ open, onClose, title, subtitle, icon: Icon, size
               </button>
             </div>
 
-            <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
+            <div className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+              {children}
+            </div>
 
             {footer && (
-              <div className="border-t border-cream-200 bg-cream-50 px-5 py-3.5 sm:px-6 dark:border-chocolate-700 dark:bg-chocolate-900/40">
+              <div className="shrink-0 border-t border-cream-200 bg-cream-50 px-5 py-3.5 sm:px-6 dark:border-chocolate-700 dark:bg-chocolate-900/40">
                 {footer}
               </div>
             )}
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

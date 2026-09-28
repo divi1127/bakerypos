@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, Info, TriangleAlert, X, XCircle } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { canPortal } from '../utils/portal'
 
 const ICONS = {
   success: CheckCircle2,
@@ -26,8 +28,10 @@ const BARS = {
 }
 
 export default function ToastStack({ toasts, onDismiss }) {
-  return (
-    <div className="no-print pointer-events-none fixed inset-x-0 bottom-20 z-[90] flex flex-col items-center gap-2 px-4 sm:bottom-auto sm:right-5 sm:top-5 sm:left-auto sm:items-end sm:px-0">
+  if (!canPortal()) return null
+
+  return createPortal(
+    <div className="no-print pointer-events-none fixed inset-x-0 bottom-20 z-[95] flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:right-5 sm:bottom-auto sm:top-5 sm:items-end sm:px-0">
       <AnimatePresence initial={false}>
         {toasts.map((toast) => {
           const Icon = ICONS[toast.variant] || Info
@@ -63,6 +67,7 @@ export default function ToastStack({ toasts, onDismiss }) {
           )
         })}
       </AnimatePresence>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -6,7 +6,8 @@ import { seedOrders } from '../data/orders'
 import { seedCustomers } from '../data/customers'
 import { seedOffers } from '../data/offers'
 import { KEYS, readCollection, readStore, removeStore, writeStore } from '../utils/storage'
-import { buildBillNumber, computeTotals } from '../utils/billing'
+import { buildBillNumber, computeChange, computeTotals } from '../utils/billing'
+import { applyPrintSize, printSizeConfig } from '../utils/print'
 
 const AppContext = createContext(null)
 
@@ -84,6 +85,8 @@ export function AppProvider({ children }) {
   const [customers, setCustomers] = useState(() => readCollection(KEYS.customers, seedCustomers))
   const [offers, setOffers] = useState(() => readCollection(KEYS.offers, seedOffers))
   const [billCounter, setBillCounter] = useState(() => readStore(KEYS.billCounter, BRAND.billStart))
+  const [printSize, setPrintSizeState] = useState(() => printSizeConfig(readStore(KEYS.printSize, 'thermal')))
+  const [roundOff, setRoundOff] = useState(() => readStore(KEYS.roundOff, false))
   const [cart, dispatch] = useReducer(cartReducer, emptyCart)
   const [toasts, setToasts] = useState([])
   const [booted, setBooted] = useState(false)
@@ -118,6 +121,16 @@ export function AppProvider({ children }) {
   useEffect(() => {
     writeStore(KEYS.cart, cart)
   }, [cart])
+
+  useEffect(() => {
+    applyPrintSize(printSize)
+  }, [printSize])
+
+  useEffect(() => {
+    writeStore(KEYS.roundOff, roundOff)
+  }, [roundOff])
+
+  const setPrintSize = useCallback((size) => setPrintSizeState(printSizeConfig(size)), [])
 
   useEffect(() => {
     const stored = readStore(KEYS.cart, null)
@@ -238,8 +251,8 @@ export function AppProvider({ children }) {
   )
 
   const totals = useMemo(
-    () => computeTotals(cart.items, cart.discount, BRAND.taxRate),
-    [cart.items, cart.discount],
+    () => computeTotals(cart.items, cart.discount, BRAND.taxRate, roundOff),
+    [cart.items, cart.discount, roundOff],
   )
 
   const cartCustomer = useMemo(
@@ -264,10 +277,11 @@ export function AppProvider({ children }) {
         subtotal: totals.subtotal,
         discount: totals.discount,
         tax: totals.tax,
+        roundOff: totals.roundOff,
         total: totals.total,
         payment: method,
         cashReceived: method === 'Cash' ? Number(cashReceived || totals.total) : undefined,
-        change: method === 'Cash' ? Number(cashReceived || 0) - totals.total : undefined,
+        change: method === 'Cash' ? Math.max(0, computeChange(cashReceived, totals.total)) : undefined,
         status: 'Completed',
         note: cart.note,
         createdAt: new Date().toISOString(),
@@ -429,12 +443,14 @@ export function AppProvider({ children }) {
     removeStore(KEYS.offers)
     removeStore(KEYS.cart)
     removeStore(KEYS.billCounter)
+    removeStore(KEYS.roundOff)
     setProducts(seedProducts)
     setCategories(seedCategories)
     setOrders(seedOrders)
     setCustomers(seedCustomers)
     setOffers(seedOffers)
     setBillCounter(BRAND.billStart)
+    setRoundOff(false)
     dispatch({ type: 'clear' })
     pushToast({ title: 'Demo data restored', message: 'All demo records are back to defaults.', variant: 'success' })
   }, [pushToast])
@@ -447,6 +463,10 @@ export function AppProvider({ children }) {
       toggleTheme: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
       shop,
       setShop,
+      printSize,
+      setPrintSize,
+      roundOff,
+      setRoundOff,
       products,
       categories,
       orders,
@@ -482,7 +502,7 @@ export function AppProvider({ children }) {
       resetDemo,
     }),
     [
-      page, theme, shop, products, categories, orders, customers, offers, cart, cartCustomer, totals,
+      page, theme, shop, printSize, setPrintSize, roundOff, setRoundOff, products, categories, orders, customers, offers, cart, cartCustomer, totals,
       toasts, booted, pushToast, dismissToast, addToCart, incrementItem, decrementItem, removeItem,
       clearCart, setCartCustomer, setCartNote, setDiscount, applyOffer, completePayment, upsertProduct,
       deleteProduct, upsertCategory, deleteCategory, upsertOffer, deleteOffer, toggleOffer,

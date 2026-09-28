@@ -67,11 +67,11 @@ export default function Categories() {
 
   const totals = useMemo(
     () => ({
-      listed: categories.reduce((s, c) => s + c.productCount, 0),
+      listed: withCounts.reduce((s, c) => s + c.liveCount, 0),
       live: products.length,
-      active: categories.filter((c) => c.active).length,
+      active: withCounts.filter((c) => c.active).length,
     }),
-    [categories, products],
+    [withCounts, products],
   )
 
   const open = (category) => {
@@ -85,6 +85,7 @@ export default function Categories() {
 
   const submit = () => {
     if (!form.name.trim()) return
+    const liveCount = products.filter((p) => p.category === form.name.trim()).length
     upsertCategory({
       id: form.id,
       name: form.name.trim(),
@@ -92,7 +93,7 @@ export default function Categories() {
       color: form.color,
       icon: form.icon,
       active: form.active,
-      productCount: form.productCount ?? 0,
+      productCount: liveCount,
     })
     setEditing(null)
   }
@@ -173,7 +174,7 @@ export default function Categories() {
 
                 <div className="relative mt-4 flex items-center justify-between border-t border-chocolate-200/60 pt-3.5 dark:border-chocolate-600/60">
                   <div>
-                    <p className={`font-display text-xl leading-none font-semibold ${tone.text}`}>{c.productCount}</p>
+                    <p className={`font-display text-xl leading-none font-semibold ${tone.text}`}>{c.liveCount}</p>
                     <p className="text-[10.5px] text-chocolate-400 dark:text-chocolate-300">Products</p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -263,14 +264,15 @@ export default function Categories() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="label">Listed Products</p>
+              <p className="label">Products Listed</p>
               <input
                 type="number"
                 min={0}
-                value={form.productCount ?? 0}
-                onChange={(e) => setForm((f) => ({ ...f, productCount: Number(e.target.value) }))}
-                className="field"
+                readOnly
+                value={products.filter((p) => p.category === (form.name || '').trim()).length}
+                className="field cursor-not-allowed bg-cream-100/70 text-chocolate-400 dark:bg-chocolate-900/60"
               />
+              <p className="mt-1 text-[10.5px] text-chocolate-400 dark:text-chocolate-300">Counts itself from the catalogue</p>
             </div>
             <div>
               <p className="label">Status</p>
@@ -317,7 +319,7 @@ export default function Categories() {
                       : 'border-cream-200 text-chocolate-400 hover:border-caramel-300 dark:border-chocolate-600'
                   }`}
                 >
-                  <Icon className="h-4.5 w-4.5" />
+                  <Icon className="h-[18px] w-[18px]" />
                 </button>
               ))}
             </div>

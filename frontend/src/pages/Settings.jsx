@@ -8,7 +8,6 @@ import {
   MapPin,
   Moon,
   Phone,
-  Printer,
   Receipt,
   RefreshCcw,
   Save,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import Modal from '../components/Modal'
+import { PrintButton, PrintSizePicker } from '../components/PrintControls'
 import StatusBadge from '../components/StatusBadge'
 import { BRAND } from '../config/brand'
 import { useApp } from '../context/AppContext'
@@ -78,14 +78,18 @@ function Toggle({ checked, onChange, label, hint }) {
 }
 
 export default function Settings() {
-  const { shop, setShop, theme, toggleTheme, resetDemo, pushToast, orders, products, customers, offers } = useApp()
+  const { shop, setShop, theme, toggleTheme, resetDemo, pushToast, printSize, roundOff, setRoundOff } = useApp()
   const [tab, setTab] = useState('shop')
   const [form, setForm] = useState({ ...shop })
-  const [billing, setBilling] = useState({ taxLabel: BRAND.taxLabel, currencyNote: BRAND.currencyNote, roundOff: true, printAuto: true })
   const [confirm, setConfirm] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const dirty = JSON.stringify({ ...form, ...billing }) !== JSON.stringify({ ...shop, taxLabel: BRAND.taxLabel, currencyNote: BRAND.currencyNote, roundOff: true, printAuto: true })
+  const dirty =
+    form.name !== shop.name ||
+    form.address !== shop.address ||
+    form.phone !== shop.phone ||
+    form.email !== shop.email ||
+    form.gstin !== shop.gstin
 
   const save = () => {
     setShop((s) => ({ ...s, name: form.name.trim() || s.name, address: form.address, phone: form.phone, email: form.email, gstin: form.gstin }))
@@ -218,11 +222,29 @@ export default function Settings() {
 
       {tab === 'billing' && (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <Section title="Printer & Paper Size" hint="Applied to every bill you print or export">
+            <PrintSizePicker size="md" />
+            <div className="mt-4 rounded-xl border border-cream-200 bg-cream-50 p-3.5 dark:border-chocolate-700 dark:bg-chocolate-900/50">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-chocolate-400 uppercase dark:text-chocolate-300">
+                {printSize === 'thermal' ? '80mm × Auto' : 'A4 Portrait'}
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-chocolate-500 dark:text-chocolate-300">
+                {printSize === 'thermal'
+                  ? 'Narrow receipt layout for 80mm counter roll printers. Item names wrap onto two lines.'
+                  : 'Full-width layout for A4 sheets and “Save as PDF” exports from the browser print dialog.'}
+              </p>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <PrintButton label="Test print" className="btn-soft px-3.5 py-2.5 text-[13px]" />
+              <PrintButton label="Print as A4" size="a4" className="btn-ghost px-3.5 py-2.5 text-[13px]" />
+            </div>
+          </Section>
+
           <Section title="Tax & Rounding" hint="Applied to every bill in POS">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="label">Tax Label</p>
-                <input value={billing.taxLabel} onChange={(e) => setBilling((b) => ({ ...b, taxLabel: e.target.value }))} className="field" />
+                <input value={BRAND.taxLabel} readOnly className="field" />
               </div>
               <div>
                 <p className="label">Tax Rate</p>
@@ -234,46 +256,17 @@ export default function Settings() {
             </div>
             <div className="mt-4 space-y-2.5">
               <Toggle
-                checked={billing.roundOff}
-                onChange={(v) => setBilling((b) => ({ ...b, roundOff: v }))}
+                checked={roundOff}
+                onChange={setRoundOff}
                 label="Round off grand total"
-                hint="Round the payable amount to the nearest ₹10 on the receipt"
+                hint="Round the payable amount to the nearest ₹10 and show the difference on the bill"
               />
               <Toggle
-                checked={billing.printAuto}
-                onChange={(v) => setBilling((b) => ({ ...b, printAuto: v }))}
+                checked={Boolean(shop.autoPrint)}
+                onChange={(v) => setShop((s) => ({ ...s, autoPrint: v }))}
                 label="Open print dialog after payment"
                 hint="Turn off if your thermal printer opens automatically"
               />
-            </div>
-          </Section>
-
-          <Section title="Receipt Footer" hint="Appears at the bottom of every bill">
-            <div>
-              <p className="label">Note</p>
-              <textarea
-                rows={3}
-                value={billing.currencyNote}
-                onChange={(e) => setBilling((b) => ({ ...b, currencyNote: e.target.value }))}
-                className="field resize-none"
-              />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" onClick={() => window.print()} className="btn-soft px-3.5 py-2.5 text-[13px]">
-                <Printer className="h-4 w-4" />
-                Test print
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setBilling((b) => ({ ...b, currencyNote: BRAND.currencyNote, taxLabel: BRAND.taxLabel }))
-                  pushToast({ title: 'Billing defaults restored', variant: 'neutral' })
-                }}
-                className="btn-ghost px-3.5 py-2.5 text-[13px]"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Restore defaults
-              </button>
             </div>
           </Section>
         </div>

@@ -34,7 +34,7 @@ const BLANK = {
 }
 
 export default function Products() {
-  const { products, upsertProduct, deleteProduct, pushToast, categories } = useApp()
+  const { products, upsertProduct, deleteProduct, pushToast } = useApp()
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState('All')
   const [editing, setEditing] = useState(null)
@@ -355,14 +355,11 @@ export default function Products() {
           <div>
             <p className="label">Category</p>
             <select value={form.category} onChange={set('category')} className="field">
-              {categoryOrder
-                .slice(1)
-                .filter((c) => categories.some((x) => x.name === c) || true)
-                .map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
+              {categoryOrder.slice(1).map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
 

@@ -8,6 +8,8 @@ export const KEYS = {
   offers: 'bb.offers',
   billCounter: 'bb.billCounter',
   shop: 'bb.shop',
+  printSize: 'bb.printSize',
+  roundOff: 'bb.roundOff',
 }
 
 export function readStore(key, fallback) {

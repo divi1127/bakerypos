@@ -1,8 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { canPortal } from '../utils/portal'
 
 export default function Drawer({ open, onClose, title, subtitle, icon: Icon, badge, children, footer }) {
+
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => {
@@ -17,10 +20,12 @@ export default function Drawer({ open, onClose, title, subtitle, icon: Icon, bad
     }
   }, [open, onClose])
 
-  return (
+  if (!canPortal()) return null
+
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="no-print fixed inset-0 z-[85] flex justify-end">
+        <div className="fixed inset-0 z-[85] flex justify-end">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -55,14 +60,17 @@ export default function Drawer({ open, onClose, title, subtitle, icon: Icon, bad
               </button>
             </div>
 
-            <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+            <div className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">{children}</div>
 
             {footer && (
-              <div className="border-t border-cream-200 bg-cream-50 px-5 py-3.5 dark:border-chocolate-700 dark:bg-chocolate-900/40">{footer}</div>
+              <div className="shrink-0 border-t border-cream-200 bg-cream-50 px-5 py-3.5 dark:border-chocolate-700 dark:bg-chocolate-900/40">
+                {footer}
+              </div>
             )}
           </motion.aside>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

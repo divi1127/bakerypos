@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutGrid, Search, ShoppingBag, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Cart from '../components/Cart'
 import EmptyState from '../components/EmptyState'
 import PaymentModal from '../components/PaymentModal'
@@ -224,28 +225,31 @@ export default function POS({ cartSheetOpen, setCartSheetOpen }) {
         </div>
       </aside>
 
-      <AnimatePresence>
-        {cartSheetOpen && (
-          <div className="fixed inset-0 z-[75] lg:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setCartSheetOpen(false)}
-              className="absolute inset-0 bg-chocolate-900/50 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-              className="absolute inset-x-0 bottom-0 h-[88vh] overflow-hidden rounded-t-3xl border-t border-cream-300 bg-white shadow-lift dark:border-chocolate-600 dark:bg-chocolate-800"
-            >
-              <Cart mobile onClose={() => setCartSheetOpen(false)} onCheckout={openCheckout} />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {cartSheetOpen && (
+            <div className="fixed inset-0 z-[75] lg:hidden">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setCartSheetOpen(false)}
+                className="absolute inset-0 bg-chocolate-900/50 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+                className="absolute inset-x-0 bottom-0 flex h-[88dvh] flex-col overflow-hidden rounded-t-3xl border-t border-cream-300 bg-white shadow-lift dark:border-chocolate-600 dark:bg-chocolate-800"
+              >
+                <Cart mobile onClose={() => setCartSheetOpen(false)} onCheckout={openCheckout} />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {cartCount > 0 && (
         <motion.button

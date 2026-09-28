@@ -5,7 +5,6 @@ import {
   Clock3,
   Download,
   Eye,
-  Printer,
   Receipt,
   Search,
   XCircle,
@@ -13,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import Drawer from '../components/Drawer'
 import EmptyState from '../components/EmptyState'
+import { PrintButton, PrintSizePicker } from '../components/PrintControls'
 import ReceiptView from '../components/Receipt'
 import StatusBadge from '../components/StatusBadge'
 import { TableSkeleton } from '../components/Skeleton'
@@ -294,17 +294,11 @@ export default function Orders() {
         footer={
           selected && (
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  window.print()
-                  pushToast({ title: 'Bill printed successfully', message: selected.billNo, variant: 'success' })
-                }}
+              <PrintButton
+                label="Print Bill"
                 className="btn-ghost flex-1 px-3 py-2.5"
-              >
-                <Printer className="h-4 w-4" />
-                Print
-              </button>
+                onPrint={() => pushToast({ title: 'Sending to printer', message: selected.billNo, variant: 'success' })}
+              />
               {selected.status !== 'Completed' && (
                 <button
                   type="button"
@@ -389,6 +383,31 @@ export default function Orders() {
                   <dt className="text-chocolate-500 dark:text-chocolate-300">Tax</dt>
                   <dd className="font-semibold text-chocolate-800 dark:text-cream-100">{CURRENCY(selected.tax)}</dd>
                 </div>
+                {Number(selected.roundOff || 0) !== 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-chocolate-500 dark:text-chocolate-300">Round Off</dt>
+                    <dd className="font-semibold text-chocolate-800 dark:text-cream-100">
+                      {selected.roundOff > 0 ? '+' : '-'}
+                      {CURRENCY(Math.abs(selected.roundOff))}
+                    </dd>
+                  </div>
+                )}
+                {selected.payment === 'Cash' && (
+                  <div className="flex justify-between">
+                    <dt className="text-chocolate-500 dark:text-chocolate-300">Cash Received</dt>
+                    <dd className="font-semibold text-chocolate-800 dark:text-cream-100">
+                      {CURRENCY(selected.cashReceived ?? selected.total)}
+                    </dd>
+                  </div>
+                )}
+                {selected.payment === 'Cash' && (
+                  <div className="flex justify-between">
+                    <dt className="text-chocolate-500 dark:text-chocolate-300">Change Returned</dt>
+                    <dd className="font-semibold text-sage-600 dark:text-sage-300">
+                      {CURRENCY(selected.change || 0)}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-dashed border-cream-300 pt-2 dark:border-chocolate-600">
                   <dt className="text-[11px] font-bold tracking-[0.1em] text-chocolate-800 uppercase dark:text-cream-100">
                     Total
@@ -407,7 +426,10 @@ export default function Orders() {
             )}
 
             <div className="border-t border-cream-200 pt-4 dark:border-chocolate-700">
-              <p className="label">Receipt Preview</p>
+              <div className="mb-2.5 flex items-center justify-between gap-2">
+                <p className="label mb-0">Receipt Preview</p>
+                <PrintSizePicker />
+              </div>
               <ReceiptView order={selected} compact />
             </div>
           </div>

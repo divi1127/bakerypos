@@ -141,11 +141,35 @@
     background: #fff;
   }
 
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+
   .print-area {
-    position: fixed;
-    inset: 0;
-    margin: 0;
-    padding: 0;
+    position: absolute !important;
+    top: 0;
+    left: 0;
     width: 100%;
+    max-width: 100% !important;
+    margin: 0 auto;
+    padding: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .bb-print-holder {
+    display: block;
+    position: static;
+  }
+
+  .dark .print-area {
+    background: #fff !important;
+    border-color: #fff !important;
   }
 }

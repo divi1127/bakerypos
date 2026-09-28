@@ -16,8 +16,10 @@ import {
 import { useMemo, useState } from 'react'
 import { BRAND, CURRENCY } from '../config/brand'
 import { useApp } from '../context/AppContext'
-import { roundToNearest } from '../utils/billing'
+import { computeChange, roundToNearest } from '../utils/billing'
+import { printBill } from '../utils/print'
 import Modal from './Modal'
+import { PrintSizePicker } from './PrintControls'
 import Receipt from './Receipt'
 
 const METHODS = [
@@ -64,6 +66,7 @@ function FakeQr() {
 }
 
 function SuccessView({ order, onNewBill, onClose }) {
+  const { printSize } = useApp()
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -130,12 +133,15 @@ function SuccessView({ order, onNewBill, onClose }) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-2 rounded-xl border border-caramel-200 bg-caramel-100 px-4 py-2.5 dark:border-caramel-500/30 dark:bg-caramel-500/10"
+          className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-caramel-200 bg-caramel-100 px-4 py-2.5 dark:border-caramel-500/30 dark:bg-caramel-500/10"
         >
-          <p className="text-[11px] font-semibold tracking-[0.1em] text-caramel-700 uppercase dark:text-caramel-300">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.1em] text-caramel-700 uppercase dark:text-caramel-300">
+            <Banknote className="h-3.5 w-3.5" />
             Change to return
-          </p>
-          <p className="font-display text-xl font-semibold text-caramel-700 dark:text-caramel-300">{CURRENCY(order.change)}</p>
+          </span>
+          <span className="font-display text-xl leading-none font-semibold text-caramel-700 dark:text-caramel-300">
+            {CURRENCY(order.change)}
+          </span>
         </motion.div>
       )}
 
@@ -143,17 +149,23 @@ function SuccessView({ order, onNewBill, onClose }) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.56 }}
-        className="mt-7 w-full"
+        className="mt-5 w-full"
       >
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          <p className="text-[10px] font-bold tracking-[0.12em] text-chocolate-400 uppercase dark:text-chocolate-300">
+            Print Size
+          </p>
+          <PrintSizePicker />
+        </div>
         <Receipt order={order} compact />
       </motion.div>
 
-      <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
-        <button type="button" onClick={() => window.print()} className="btn-ghost col-span-2 py-3 sm:col-span-1">
+      <div className="mt-5 grid w-full grid-cols-2 gap-2.5">
+        <button type="button" onClick={() => printBill(printSize)} className="btn-ghost col-span-2 py-3 sm:col-span-1">
           <Printer className="h-4 w-4" />
           Print Bill
         </button>
-        <button type="button" onClick={() => window.print()} className="btn-ghost col-span-2 py-3 sm:col-span-1">
+        <button type="button" onClick={() => printBill(printSize)} className="btn-ghost col-span-2 py-3 sm:col-span-1">
           <Download className="h-4 w-4" />
           Download PDF
         </button>
@@ -171,7 +183,7 @@ function SuccessView({ order, onNewBill, onClose }) {
 }
 
 export default function PaymentModal({ open, onClose }) {
-  const { cart, totals, completePayment, pushToast, clearCart } = useApp()
+  const { cart, totals, completePayment, pushToast, clearCart, printSize, shop } = useApp()
   const [method, setMethod] = useState('UPI')
   const [cashReceived, setCashReceived] = useState('')
   const [stage, setStage] = useState('form')
@@ -179,8 +191,10 @@ export default function PaymentModal({ open, onClose }) {
   const [order, setOrder] = useState(null)
 
   const numericCash = Number(cashReceived) || 0
-  const change = roundToNearest(numericCash - totals.total, 5)
-  const cashValid = method !== 'Cash' || numericCash >= totals.total
+  const delta = computeChange(numericCash, totals.total)
+  const change = Math.max(0, delta)
+  const short = delta < 0
+  const cashValid = method !== 'Cash' || delta >= 0
   const suggestions = useMemo(() => {
     if (!totals.total) return []
     return [...new Set([totals.total, roundToNearest(totals.total, 100), roundToNearest(totals.total, 500), roundToNearest(totals.total, 1000)])]
@@ -202,6 +216,7 @@ export default function PaymentModal({ open, onClose }) {
         setOrder(created)
         setStage('success')
         clearCart(true)
+        if (shop.autoPrint) window.setTimeout(() => printBill(printSize), 420)
         pushToast({ title: 'Payment completed successfully', message: `${created.billNo} · ${CURRENCY(created.total)}`, variant: 'success' })
       }
     }, 1100)
@@ -308,12 +323,12 @@ export default function PaymentModal({ open, onClose }) {
                       <p className="label">Change</p>
                       <div
                         className={`grid h-12 place-items-center rounded-xl border font-mono text-lg font-semibold ${
-                          change >= 0
-                            ? 'border-sage-200 bg-sage-100/70 text-sage-700 dark:border-sage-500/30 dark:bg-sage-900/25 dark:text-sage-300'
-                            : 'border-red-200 bg-red-50 text-red-500 dark:border-red-900/50 dark:bg-red-950/25'
+                          short
+                            ? 'border-red-200 bg-red-50 text-red-500 dark:border-red-900/50 dark:bg-red-950/25'
+                            : 'border-sage-200 bg-sage-100/70 text-sage-700 dark:border-sage-500/30 dark:bg-sage-900/25 dark:text-sage-300'
                         }`}
                       >
-                        {change >= 0 ? CURRENCY(change) : 'Short'}
+                        {short ? `Short ${CURRENCY(Math.abs(change))}` : CURRENCY(change)}
                       </div>
                     </div>
                   </div>

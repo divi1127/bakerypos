@@ -14,13 +14,18 @@ export function cartCount(items) {
   return items.reduce((sum, item) => sum + item.qty, 0)
 }
 
-export function computeTotals(items, discount = 0, taxRate = BRAND.taxRate) {
+export function computeTotals(items, discount = 0, taxRate = BRAND.taxRate, roundOff = false) {
   const subtotal = cartSubtotal(items)
   const cappedDiscount = round(Math.min(Math.max(discount, 0), subtotal))
   const taxable = round(subtotal - cappedDiscount)
   const tax = round(taxable * taxRate)
-  const total = round(taxable + tax)
-  return { subtotal, discount: cappedDiscount, tax, total, taxRate }
+  const rawTotal = round(taxable + tax)
+  const total = roundOff ? roundToNearest(rawTotal, 10) : rawTotal
+  return { subtotal, discount: cappedDiscount, tax, total, taxRate, roundOff: round(total - rawTotal) }
+}
+
+export function computeChange(received, total) {
+  return round(Number(received || 0) - Number(total || 0))
 }
 
 export function nextBillNumber(counter) {
