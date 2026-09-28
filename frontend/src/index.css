@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: 253 247 238;
+    --surface-raised: 255 255 255;
+    --line: 240 222 199;
+  }
+
+  .dark {
+    --surface: 29 19 11;
+    --surface-raised: 44 29 18;
+    --line: 78 58 40;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: rgb(var(--surface));
+    color: #3e2919;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+  }
+
+  .dark body {
+    color: #f8eddd;
+  }
+
+  ::selection {
+    background-color: #f3d6ac;
+    color: #2c1d12;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border bg-white dark:bg-chocolate-800;
+    border-color: rgb(var(--line));
+    @apply shadow-soft;
+  }
+
+  .surface {
+    background-color: rgb(var(--surface));
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-cream-300 bg-white px-3.5 py-2.5 text-sm text-chocolate-800 outline-none transition placeholder:text-chocolate-300 focus:border-caramel-400 focus:ring-4 focus:ring-caramel-100 dark:border-chocolate-600 dark:bg-chocolate-700 dark:text-cream-100 dark:placeholder:text-chocolate-400 dark:focus:border-caramel-500 dark:focus:ring-caramel-500/20;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.09em] text-chocolate-400 dark:text-chocolate-300;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl text-sm font-semibold transition duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-chocolate-700 text-cream-100 shadow-soft hover:bg-chocolate-600 hover:shadow-lift dark:bg-caramel-400 dark:text-chocolate-900 dark:hover:bg-caramel-300;
+  }
+
+  .btn-accent {
+    @apply btn bg-caramel-400 text-chocolate-900 shadow-glow hover:bg-caramel-300;
+  }
+
+  .btn-ghost {
+    @apply btn border border-cream-300 bg-white text-chocolate-600 hover:border-caramel-300 hover:bg-cream-100 dark:border-chocolate-600 dark:bg-chocolate-800 dark:text-cream-200 dark:hover:bg-chocolate-700;
+  }
+
+  .btn-soft {
+    @apply btn bg-cream-200 text-chocolate-700 hover:bg-cream-300 dark:bg-chocolate-700 dark:text-cream-200 dark:hover:bg-chocolate-600;
+  }
+
+  .btn-icon {
+    @apply btn h-9 w-9 text-chocolate-400 hover:bg-cream-200 hover:text-chocolate-700 dark:text-cream-300 dark:hover:bg-chocolate-700;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-cream-200 dark:bg-chocolate-700;
+  }
+
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full;
+    content: '';
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.45) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.6s infinite;
+  }
+
+  .dark .skeleton::after {
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #e9bc7c transparent;
+  }
+
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scroll-thin::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background-color: #e9bc7c;
+  }
+
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .print-area {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+}
